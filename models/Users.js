@@ -14,15 +14,22 @@ class User {
 
       const user = userRows[0];
 
-      // Step 2: Get enrolled courses from the `enrollments` table using user_id
-      const enrollmentQuery = `SELECT course_id FROM enrollments WHERE user_id = ?`;
+      // Step 2: Get enrolled courses and type from the `enrollments` table using user_id
+      const enrollmentQuery = `SELECT course_id, type FROM enrollments WHERE user_id = ?`;
       const [enrollmentRows] = await db.execute(enrollmentQuery, [
         user.user_id,
       ]);
 
+      console.log(enrollmentRows);
+
       const courseIds = enrollmentRows.map(
         (enrollment) => enrollment.course_id
       );
+      const userType = enrollmentRows.some(
+        (enrollment) => enrollment.type !== 0
+      )
+        ? "instructor"
+        : "student";
 
       // Handle case when courseIds is empty
       if (courseIds.length === 0) {
@@ -32,6 +39,7 @@ class User {
             id: user.user_id,
             name: `${user.first_name} ${user.last_name}`,
             totalCredits: 0,
+            type: userType,
           },
         };
       }
@@ -49,6 +57,7 @@ class User {
           id: user.user_id,
           name: `${user.first_name} ${user.last_name}`,
           totalCredits,
+          role: userType,
         },
       };
     } catch (error) {
