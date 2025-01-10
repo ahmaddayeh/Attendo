@@ -9,9 +9,10 @@ const expiresIn = process.env.JWT_EXPIRES_IN;
 // Register a new user
 exports.register = async (req, res) => {
   try {
-    const { first_name, last_name, email, password, role } = req.body;
-    const existingUser = await Auth.findbyEmail(email);
-    if (existingUser.found) {
+    const { first_name, last_name, email, password } = req.body;
+    const existingUser = await Auth.findByEmail(email);
+    if (existingUser.found == true) {
+      console.log(existingUser.data);
       return res.status(400).json({ error: "User already exists" });
     }
     const salt = await bcrypt.genSalt(10);
@@ -21,7 +22,6 @@ exports.register = async (req, res) => {
       last_name,
       email,
       password: hashedPassword,
-      role,
     });
     res.status(201).json(user);
   } catch (error) {
@@ -34,20 +34,18 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await Auth.findbyEmail(email);
+    const user = await Auth.findByEmail(email);
     if (user.found) {
       if (!user || !(await bcrypt.compare(password, user.data.password))) {
         return res.status(401).json({ error: "Invalid email or password" });
       }
       console.log(user);
-      const token = jwt.sign(
-        { id: user.data.id, role: user.data.role },
-        secret,
-        {
-          expiresIn: expiresIn,
-        }
-      );
+      const token = jwt.sign({ id: user.data.id }, secret, {
+        expiresIn: expiresIn,
+      });
       res.json({ token });
+    } else {
+      return res.status(400).json({ error: "User Not Found" });
     }
   } catch (error) {
     res.status(400).json({ error: error.message });
