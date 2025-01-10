@@ -40,6 +40,7 @@ class User {
             name: `${user.first_name} ${user.last_name}`,
             totalCredits: 0,
             type: userType,
+            numberOfCourses: 0,
           },
         };
       }
@@ -58,6 +59,7 @@ class User {
           name: `${user.first_name} ${user.last_name}`,
           totalCredits,
           role: userType,
+          numberOfCourses: courseIds.length,
         },
       };
     } catch (error) {
