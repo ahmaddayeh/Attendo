@@ -14,30 +14,51 @@ class Course {
         };
       }
 
-      const courseDetails = await Promise.all(
-        courseRows.map(async (course) => {
-          const scheduleQuery = `SELECT id, location_id, days, start_time, end_time FROM schedules WHERE course_id = ?`;
-          const [scheduleRows] = await db.execute(scheduleQuery, [
-            course.course_id,
-          ]);
+      const courseDetails = [];
 
-          const enrollmentQuery = `SELECT type FROM enrollments WHERE course_id = ?`;
-          const [enrollmentRows] = await db.execute(enrollmentQuery, [
-            course.course_id,
-          ]);
+      for (const course of courseRows) {
+        const scheduleQuery = `SELECT id, location_id, days, start_time, end_time FROM schedules WHERE course_id = ?`;
+        const [scheduleRows] = await db.execute(scheduleQuery, [
+          course.course_id,
+        ]);
 
-          const enrollmentType =
-            enrollmentRows.length > 0 ? enrollmentRows[0].type : null;
+        const enrollmentQuery = `SELECT type FROM enrollments WHERE course_id = ?`;
+        const [enrollmentRows] = await db.execute(enrollmentQuery, [
+          course.course_id,
+        ]);
 
-          return {
+        const enrollmentType =
+          enrollmentRows.length > 0 ? enrollmentRows[0].type : null;
+
+        if (scheduleRows.length > 0) {
+          scheduleRows.forEach((schedule) => {
+            courseDetails.push({
+              courseId: course.course_id,
+              name: course.name,
+              credits: course.credits,
+              enrollmentType,
+              scheduleId: schedule.id,
+              locationId: schedule.location_id,
+              days: schedule.days,
+              startTime: schedule.start_time,
+              endTime: schedule.end_time,
+            });
+          });
+        } else {
+          // If no schedules, include the course without schedule details
+          courseDetails.push({
             courseId: course.course_id,
             name: course.name,
             credits: course.credits,
-            enrollmentType, // Add enrollment type
-            schedules: scheduleRows, // Include schedules (may be empty)
-          };
-        })
-      );
+            enrollmentType,
+            scheduleId: null,
+            locationId: null,
+            days: null,
+            startTime: null,
+            endTime: null,
+          });
+        }
+      }
 
       return {
         success: true,
@@ -54,7 +75,7 @@ class Course {
 
   // Get courses and schedules by user ID
   static async getByUser(data) {
-    const { id } = data; // Destructure input
+    const { id } = data;
 
     try {
       // Step 1: Fetch the user_id using the id from JWT
@@ -71,37 +92,58 @@ class Course {
       const enrollmentQuery = `SELECT course_id, type FROM enrollments WHERE user_id = ?`;
       const [enrollmentRows] = await db.execute(enrollmentQuery, [userId]);
 
-      const courseDetails = await Promise.all(
-        enrollmentRows.map(async (enrollment) => {
-          const courseQuery = `SELECT course_id, name, credits FROM courses WHERE course_id = ?`;
-          const [courseRows] = await db.execute(courseQuery, [
-            enrollment.course_id,
-          ]);
+      const courseDetails = [];
 
-          if (courseRows.length === 0) {
-            return null;
-          }
+      for (const enrollment of enrollmentRows) {
+        const courseQuery = `SELECT course_id, name, credits FROM courses WHERE course_id = ?`;
+        const [courseRows] = await db.execute(courseQuery, [
+          enrollment.course_id,
+        ]);
 
-          const course = courseRows[0];
+        if (courseRows.length === 0) {
+          continue;
+        }
 
-          const scheduleQuery = `SELECT id, location_id, days, start_time, end_time FROM schedules WHERE course_id = ?`;
-          const [scheduleRows] = await db.execute(scheduleQuery, [
-            course.course_id,
-          ]);
+        const course = courseRows[0];
 
-          return {
+        const scheduleQuery = `SELECT id, location_id, days, start_time, end_time FROM schedules WHERE course_id = ?`;
+        const [scheduleRows] = await db.execute(scheduleQuery, [
+          course.course_id,
+        ]);
+
+        if (scheduleRows.length > 0) {
+          scheduleRows.forEach((schedule) => {
+            courseDetails.push({
+              courseId: course.course_id,
+              name: course.name,
+              credits: course.credits,
+              enrollmentType: enrollment.type,
+              scheduleId: schedule.id,
+              locationId: schedule.location_id,
+              days: schedule.days,
+              startTime: schedule.start_time,
+              endTime: schedule.end_time,
+            });
+          });
+        } else {
+          // If no schedules, include the course without schedule details
+          courseDetails.push({
             courseId: course.course_id,
             name: course.name,
             credits: course.credits,
-            enrollmentType: enrollment.type, // Add enrollment type
-            schedules: scheduleRows, // Include schedules (may be empty)
-          };
-        })
-      );
+            enrollmentType: enrollment.type,
+            scheduleId: null,
+            locationId: null,
+            days: null,
+            startTime: null,
+            endTime: null,
+          });
+        }
+      }
 
       return {
         success: true,
-        data: courseDetails.filter((course) => course !== null), // Filter out any null courses
+        data: courseDetails,
       };
     } catch (error) {
       console.error("Error in getByUser:", error.message);

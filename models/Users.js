@@ -28,8 +28,8 @@ class User {
       const userType = enrollmentRows.some(
         (enrollment) => enrollment.type !== 0
       )
-        ? "instructor"
-        : "student";
+        ? "Instructor"
+        : "Student";
 
       // Handle case when courseIds is empty
       if (courseIds.length === 0) {
@@ -39,7 +39,7 @@ class User {
             id: user.user_id,
             name: `${user.first_name} ${user.last_name}`,
             totalCredits: 0,
-            type: userType,
+            role: userType,
             numberOfCourses: 0,
           },
         };
