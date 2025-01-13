@@ -76,6 +76,73 @@ class AttendanceSession {
       throw err;
     }
   }
+  static async getAttendanceBySectionAndUser(data) {
+    try {
+      const { section_id, user_id } = data;
+
+      // Retrieve active attendance sessions for the section
+      const query = `
+        SELECT a.user_id, a.session_id, a.attendance_status, a.created_at, a.updated_at 
+        FROM attendance a
+        JOIN attendance_sessions s ON a.session_id = s.id
+        WHERE s.schedule_id = ? AND a.user_id = ? AND s.active = 1 AND a.attendance_status != 0
+      `;
+
+      const [attendanceRecords] = await db.execute(query, [
+        section_id,
+        user_id,
+      ]);
+
+      return attendanceRecords;
+    } catch (err) {
+      console.error("Error retrieving attendance for section and user:", err);
+      throw err;
+    }
+  }
+  static async getAttendanceForUserBySchedule(data) {
+    try {
+      const { schedule_id, user_id } = data;
+
+      // Query to get active sessions for a given schedule_id and user_id
+      const query = `
+        SELECT 
+          attendance_sessions.id AS id,
+          attendance_sessions.schedule_id,
+          attendance_sessions.date,
+          attendance_sessions.active,
+          attendance.attendance_status
+        FROM 
+          attendance_sessions
+        JOIN 
+          attendance ON attendance_sessions.id = attendance.session_id
+        WHERE 
+          attendance_sessions.schedule_id = ? 
+          AND attendance.user_id = ? 
+          AND attendance_sessions.active = 1 
+          AND attendance.attendance_status = 0
+      `;
+
+      const [rows] = await db.execute(query, [schedule_id, user_id]);
+
+      if (rows.length === 0) {
+        return {
+          success: false,
+          message: "No active attendance session found for this user.",
+        };
+      }
+
+      return {
+        success: true,
+        data: rows,
+      };
+    } catch (err) {
+      console.error(
+        "Error retrieving attendance for user by schedule_id:",
+        err
+      );
+      throw err;
+    }
+  }
 }
 
 module.exports = AttendanceSession;

@@ -20,8 +20,6 @@ class User {
         user.user_id,
       ]);
 
-      console.log(enrollmentRows);
-
       const courseIds = enrollmentRows.map(
         (enrollment) => enrollment.course_id
       );
@@ -41,6 +39,7 @@ class User {
             totalCredits: 0,
             role: userType,
             numberOfCourses: 0,
+            numberOfMissedSessions: 0,
           },
         };
       }
@@ -52,6 +51,17 @@ class User {
 
       const totalCredits = creditRows[0]?.totalCredits || 0;
 
+      // Step 4: Count missed sessions from the `attendance` table
+      const missedSessionsQuery = `
+        SELECT COUNT(*) AS missedSessions
+        FROM attendance
+        WHERE user_id = ? AND attendance_status = 0`;
+      const [missedSessionRows] = await db.execute(missedSessionsQuery, [
+        user.user_id,
+      ]);
+
+      const numberOfMissedSessions = missedSessionRows[0]?.missedSessions || 0;
+
       return {
         success: true,
         data: {
@@ -60,6 +70,7 @@ class User {
           totalCredits,
           role: userType,
           numberOfCourses: courseIds.length,
+          numberOfMissedSessions,
         },
       };
     } catch (error) {

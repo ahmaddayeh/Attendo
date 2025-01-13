@@ -70,3 +70,27 @@ exports.getSessionsBySchduleId = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+exports.getAttendanceForUserBySchedule = async (req, res) => {
+  try {
+    const { user_id, schedule_id } = req.params;
+    console.log(req.params);
+
+    const attendance = await AttendanceSession.getAttendanceForUserBySchedule({
+      schedule_id,
+      user_id,
+    });
+
+    if (attendance.success) {
+      res.status(200).json({
+        attendance: attendance.data,
+        success: true,
+        message: "Attendance retrieved successfully",
+      });
+    } else {
+      return res.status(404).json({ error: attendance.message });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+};

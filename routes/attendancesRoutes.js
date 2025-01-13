@@ -4,6 +4,10 @@ const attendancesController = require("../controllers/Attendance/attendancesCont
 const jwtMiddleware = require("../middleware/auth");
 
 router.get("/:id", attendancesController.getAttendanceById);
+router.get(
+  "/:id/:schedule",
+  attendancesController.getAttendanceByUserIdAndScheduleId
+);
 
 router.put("/", attendancesController.modifyAttendace);
 
