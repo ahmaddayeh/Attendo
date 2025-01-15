@@ -68,7 +68,8 @@ class AttendanceSession {
   static async getSessionsBySchduleId(data) {
     try {
       const { id } = data;
-      const query = "SELECT * FROM attendance_sessions WHERE schedule_id = ?";
+      const query =
+        "SELECT id, schedule_id, DATE_FORMAT(date, '%Y-%m-%d') as date, active FROM attendance_sessions WHERE schedule_id = ?";
       const [rows] = await db.execute(query, [id]);
       return rows;
     } catch (err) {
@@ -76,13 +77,14 @@ class AttendanceSession {
       throw err;
     }
   }
+
   static async getAttendanceBySectionAndUser(data) {
     try {
       const { section_id, user_id } = data;
 
       // Retrieve active attendance sessions for the section
       const query = `
-        SELECT a.user_id, a.session_id, a.attendance_status, a.created_at, a.updated_at 
+        SELECT a.user_id, a.session_id, a.attendance_status, DATE_FORMAT(a.created_at, '%Y-%m-%d') as created_at, DATE_FORMAT(a.updated_at, '%Y-%m-%d') as updated_at 
         FROM attendance a
         JOIN attendance_sessions s ON a.session_id = s.id
         WHERE s.schedule_id = ? AND a.user_id = ? AND s.active = 1 AND a.attendance_status != 0
@@ -99,6 +101,7 @@ class AttendanceSession {
       throw err;
     }
   }
+
   static async getAttendanceForUserBySchedule(data) {
     try {
       const { schedule_id, user_id } = data;
@@ -108,7 +111,7 @@ class AttendanceSession {
         SELECT 
           attendance_sessions.id AS id,
           attendance_sessions.schedule_id,
-          attendance_sessions.date,
+          DATE_FORMAT(attendance_sessions.date, '%Y-%m-%d') as date,
           attendance_sessions.active,
           attendance.attendance_status
         FROM 

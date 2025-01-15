@@ -11,19 +11,18 @@ exports.register = async (req, res) => {
   try {
     const { first_name, last_name, email, password } = req.body;
     const existingUser = await Auth.findByEmail(email);
-    if (existingUser.found == true) {
-      console.log(existingUser.data);
-      return res.status(400).json({ error: "User already exists" });
-    }
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    const user = await Auth.create({
-      first_name,
-      last_name,
-      email,
-      password: hashedPassword,
-    });
-    res.status(201).json(user);
+
+    if (existingUser.found == true) {
+      const user = await Auth.set({
+        email,
+        password: hashedPassword,
+      });
+      res.status(200).json(user);
+    } else {
+      return res.status(400).json({ error: "User not found, contact admins" });
+    }
   } catch (error) {
     console.log(error);
     res.status(400).json({ error: error.message });

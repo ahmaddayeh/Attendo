@@ -4,10 +4,32 @@ exports.modifyAttendace = async (req, res) => {
   try {
     const { user_id, session_id, attendance_status } = req.body;
 
+    let status;
+    switch (attendance_status) {
+      case "absent":
+        status = 0;
+        break;
+      case "excused":
+        status = 1;
+        break;
+      case "late":
+        status = 2;
+        break;
+      case "present":
+        status = 3;
+        break;
+      default:
+        status = -1; // unknown status
+    }
+
+    if (status === -1) {
+      return res.status(400).json({ error: "Invalid attendance status" });
+    }
+
     const attendance = await Attendance.update({
       user_id,
       session_id,
-      attendance_status,
+      attendance_status: status,
     });
 
     if (attendance.success) {

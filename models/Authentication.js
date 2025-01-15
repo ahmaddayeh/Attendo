@@ -66,6 +66,18 @@ class Auth {
       throw err;
     }
   }
+
+  static async set(data) {
+    try {
+      const { email, password } = data;
+      const query = "UPDATE users SET password = ? WHERE email = ?";
+      await db.execute(query, [password, email]);
+      return { id };
+    } catch (err) {
+      console.error("Error updating user:", err);
+      throw err;
+    }
+  }
 }
 
 module.exports = Auth;

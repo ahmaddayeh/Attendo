@@ -25,7 +25,6 @@ class Attendance {
 
   static async findBySessionId(data) {
     try {
-      // Validate input
       if (!data || !data.id) {
         return {
           data: null,
@@ -51,11 +50,9 @@ class Attendance {
         WHERE 
             attendance.session_id = ?`;
 
-      // Execute query
       const [rows] = await db.execute(query, [id]);
       console.log("Query Result:", rows);
 
-      // Check if records exist
       if (!rows || rows.length === 0) {
         return {
           data: null,
@@ -64,14 +61,16 @@ class Attendance {
         };
       }
 
-      // Transform data into the desired structure
       const formattedData = rows.map((row) => ({
         id: row.id,
         user_id: row.user_id,
         first_name: row.first_name,
         last_name: row.last_name,
         attendance_status: row.attendance_status,
-        date: row.created_at,
+        attendance_status_literal: this.getAttendanceStatusLiteral(
+          row.attendance_status
+        ),
+        date: row.created_at.toISOString().split("T")[0],
       }));
 
       return {
@@ -87,9 +86,9 @@ class Attendance {
       };
     }
   }
+
   static async findByUserIdAndScheduleId(data) {
     try {
-      // Validate input
       if (!data || !data.id || !data.schedule) {
         return {
           data: null,
@@ -102,7 +101,8 @@ class Attendance {
 
       const query = `
         SELECT 
-            attendance.*, 
+            attendance.session_id, 
+            attendance.attendance_status, 
             attendance_sessions.schedule_id, 
             attendance_sessions.date, 
             attendance_sessions.active, 
@@ -119,13 +119,13 @@ class Attendance {
         ON 
             attendance.user_id = users.user_id
         WHERE 
-            attendance.user_id = ? AND attendance_sessions.schedule_id = ?`;
+            attendance.user_id = ? 
+            AND attendance_sessions.schedule_id = ?
+            AND attendance_sessions.active = 0`;
 
-      // Execute query
       const [rows] = await db.execute(query, [id, schedule]);
       console.log("Query Result:", rows);
 
-      // Check if records exist
       if (!rows || rows.length === 0) {
         return {
           data: null,
@@ -134,14 +134,17 @@ class Attendance {
         };
       }
 
-      // Transform data into the desired structure
       const formattedData = rows.map((row) => ({
-        id: row.id,
+        session_id: row.session_id,
         attendance_status: row.attendance_status,
+        attendance_status_literal: this.getAttendanceStatusLiteral(
+          row.attendance_status
+        ),
         schedule_id: row.schedule_id,
-        date: row.date,
+        date: row.date.toISOString().split("T")[0],
         active: row.active,
       }));
+      console.log(formattedData);
 
       return {
         data: formattedData,
@@ -157,6 +160,21 @@ class Attendance {
         success: false,
         message: "An error occurred while retrieving attendance data",
       };
+    }
+  }
+
+  static getAttendanceStatusLiteral(status) {
+    switch (status) {
+      case 0:
+        return "absent";
+      case 1:
+        return "excused";
+      case 2:
+        return "late";
+      case 3:
+        return "present";
+      default:
+        return "unknown";
     }
   }
 }
