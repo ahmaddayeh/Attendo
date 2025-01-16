@@ -1,4 +1,5 @@
 const Attendance = require("../../models/Attendance"); // Adjust the path as necessary
+const nodemailer = require("nodemailer");
 
 exports.modifyAttendace = async (req, res) => {
   try {
@@ -84,6 +85,57 @@ exports.getAttendanceByUserIdAndScheduleId = async (req, res) => {
       });
     } else {
       res.status(404).json({ error: attendance.message });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.generateAttendanceSheet = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email } = req.body;
+
+    const attendance = await Attendance.generateSheet(id);
+    console.log(attendance.filePath);
+    if (attendance.success) {
+      const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
+        secure: true,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD,
+        },
+      });
+
+      const mailOptions = {
+        from: "attendo@attendosystems.com",
+        to: email,
+        subject: "Attendance Sheet",
+        text: `Please find the attendance sheet attached.`,
+        attachments: [
+          {
+            path: attendance.filePath,
+          },
+        ],
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Error sending email:", error);
+          return res.status(500).json({ error: "Failed to send email" });
+        }
+        console.log("Email sent:", info.response);
+        res.status(200).json({
+          success: true,
+          message: "Session retrieved successfully and email sent",
+        });
+      });
+    } else {
+      console.log(attendance);
+      res.status(404).json({ error: "Session not found" });
     }
   } catch (error) {
     console.error(error);

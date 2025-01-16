@@ -72,7 +72,7 @@ class Auth {
       const { email, password } = data;
       const query = "UPDATE users SET password = ? WHERE email = ?";
       await db.execute(query, [password, email]);
-      return { id };
+      return { success: true };
     } catch (err) {
       console.error("Error updating user:", err);
       throw err;

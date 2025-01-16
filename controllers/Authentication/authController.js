@@ -9,23 +9,32 @@ const expiresIn = process.env.JWT_EXPIRES_IN;
 // Register a new user
 exports.register = async (req, res) => {
   try {
-    const { first_name, last_name, email, password } = req.body;
+    const { email, password } = req.body;
     const existingUser = await Auth.findByEmail(email);
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    if (existingUser.found == true) {
+    if (existingUser.found === true) {
       const user = await Auth.set({
         email,
         password: hashedPassword,
       });
-      res.status(200).json(user);
+      if (user.success) {
+        return res.status(200).json({
+          success: true,
+          message: "User created successfully",
+        });
+      } else {
+        return res.status(400).json({
+          error: "An error has occurred setting your password, contact admins",
+        });
+      }
     } else {
       return res.status(400).json({ error: "User not found, contact admins" });
     }
   } catch (error) {
     console.log(error);
-    res.status(400).json({ error: error.message });
+    return res.status(400).json({ error: error.message });
   }
 };
 

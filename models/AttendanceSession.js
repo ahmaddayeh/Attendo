@@ -5,19 +5,26 @@ class AttendanceSession {
     try {
       const { schedule_id, date, active } = data;
 
-      // Insert into attendance_sessions
+      const courseQuery = "SELECT course_id FROM schedules WHERE id = ?";
+      const [courseResult] = await db.execute(courseQuery, [schedule_id]);
+
+      if (!courseResult || courseResult.length === 0) {
+        throw new Error("Schedule not found");
+      }
+
+      const course_id = courseResult[0].course_id;
+
       const query =
         "INSERT INTO attendance_sessions (schedule_id, date, active) VALUES (?, ?, ?)";
       const [result] = await db.execute(query, [schedule_id, date, active]);
 
       const sessionId = result.insertId;
 
-      // Fetch enrollments for the given schedule_id (assuming schedule_id links to enrollments)
       const enrollmentsQuery =
         "SELECT id, user_id, type, course_id FROM enrollments WHERE course_id = ?";
-      const [enrollments] = await db.execute(enrollmentsQuery, [schedule_id]);
+      const [enrollments] = await db.execute(enrollmentsQuery, [course_id]);
+      console.log(enrollments);
 
-      // Prepare attendance records
       const attendanceRecords = enrollments.map((enrollment) => [
         enrollment.user_id,
         sessionId,

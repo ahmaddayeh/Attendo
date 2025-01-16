@@ -7,12 +7,12 @@ exports.sendMail = async (req, res) => {
   console.log(recipient);
   try {
     const transporter = nodemailer.createTransport({
-      host: "attendosystems.com",
-      port: 465,
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
       secure: true,
       auth: {
-        user: "attendo@attendosystems.com",
-        pass: "?8wi311nZ",
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
       },
     });
 
