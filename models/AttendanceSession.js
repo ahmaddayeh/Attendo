@@ -28,13 +28,12 @@ class AttendanceSession {
       const attendanceRecords = enrollments.map((enrollment) => [
         enrollment.user_id,
         sessionId,
-        0, // attendance_status = 0
-        new Date(), // created_at
-        new Date(), // updated_at
+        0,
+        new Date(),
+        new Date(),
       ]);
 
       if (attendanceRecords.length > 0) {
-        // Bulk insert into attendance table
         const attendanceInsertQuery =
           "INSERT INTO attendance (user_id, session_id, attendance_status, created_at, updated_at) VALUES ?";
         await db.query(attendanceInsertQuery, [attendanceRecords]);
@@ -89,7 +88,6 @@ class AttendanceSession {
     try {
       const { section_id, user_id } = data;
 
-      // Retrieve active attendance sessions for the section
       const query = `
         SELECT a.user_id, a.session_id, a.attendance_status, DATE_FORMAT(a.created_at, '%Y-%m-%d') as created_at, DATE_FORMAT(a.updated_at, '%Y-%m-%d') as updated_at 
         FROM attendance a
@@ -113,7 +111,6 @@ class AttendanceSession {
     try {
       const { schedule_id, user_id } = data;
 
-      // Query to get active sessions for a given schedule_id and user_id
       const query = `
         SELECT 
           attendance_sessions.id AS id,

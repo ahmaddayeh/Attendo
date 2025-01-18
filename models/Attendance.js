@@ -92,15 +92,17 @@ class Attendance {
 
   static async findByUserIdAndScheduleId(data) {
     try {
-      if (!data || !data.id || !data.schedule) {
+      const id = Number(data.id);
+      const schedule = Number(data.schedule);
+
+      if (!data || isNaN(id) || isNaN(schedule)) {
         return {
           data: null,
           success: false,
-          message: "Invalid input: User ID and Schedule ID are required",
+          message:
+            "Invalid input: User ID and Schedule ID must be valid integers",
         };
       }
-
-      const { id, schedule } = data;
 
       const query = `
         SELECT 
@@ -127,7 +129,7 @@ class Attendance {
             AND attendance_sessions.active = 0`;
 
       const [rows] = await db.execute(query, [id, schedule]);
-      console.log("Query Result:", rows);
+      console.log(rows);
 
       if (!rows || rows.length === 0) {
         return {
@@ -144,10 +146,9 @@ class Attendance {
           row.attendance_status
         ),
         schedule_id: row.schedule_id,
-        date: row.date.toISOString().split("T")[0],
+        date: row.date ? row.date.toISOString().split("T")[0] : null,
         active: row.active,
       }));
-      console.log(formattedData);
 
       return {
         data: formattedData,
@@ -155,8 +156,8 @@ class Attendance {
       };
     } catch (err) {
       console.error(
-        "Error finding attendance by user ID and schedule ID:",
-        err.message
+        "Error in findByUserIdAndScheduleId - Query execution failed:",
+        { error: err, query, params: [data.id, data.schedule] }
       );
       return {
         data: null,
@@ -225,7 +226,6 @@ class Attendance {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Attendance");
 
-      // Add a title row
       worksheet.mergeCells("A1:E1");
       worksheet.getCell(
         "A1"
@@ -233,7 +233,6 @@ class Attendance {
       worksheet.getCell("A1").font = { bold: true, size: 14 };
       worksheet.getCell("A1").alignment = { horizontal: "center" };
 
-      // Header row
       worksheet.addRow([
         "User ID",
         "Name",
@@ -256,15 +255,14 @@ class Attendance {
         { key: "absent_total", width: 15 },
       ];
 
-      // Data rows
       Object.entries(userAttendance).forEach(([user_id, data]) => {
         data.sessions.forEach((session, index) => {
           worksheet.addRow({
-            user_id: index === 0 ? user_id : "", // Only show user_id once per group
-            name: index === 0 ? data.name : "", // Only show name once per group
+            user_id: index === 0 ? user_id : "",
+            name: index === 0 ? data.name : "",
             date: session.date,
             status: session.status,
-            present_total: index === 0 ? data.summary.present : "", // Show totals only on the first row of each group
+            present_total: index === 0 ? data.summary.present : "",
             late_total: index === 0 ? data.summary.late : "",
             excused_total: index === 0 ? data.summary.excused : "",
             absent_total: index === 0 ? data.summary.absent : "",
@@ -272,13 +270,12 @@ class Attendance {
         });
       });
 
-      // Add some styling for better readability
-      worksheet.getRow(2).font = { bold: true }; // Header row
+      worksheet.getRow(2).font = { bold: true };
       worksheet.getRow(2).alignment = { horizontal: "center" };
       worksheet.eachRow((row, rowNumber) => {
         row.alignment = { vertical: "middle", horizontal: "center" };
         if (rowNumber > 2) {
-          row.getCell(4).alignment = { horizontal: "left" }; // Status column left-aligned
+          row.getCell(4).alignment = { horizontal: "left" };
         }
       });
 
@@ -309,6 +306,119 @@ class Attendance {
     }
   }
 
+  static async getUserAttendanceSummary(user_id) {
+    try {
+      if (!user_id) {
+        throw new Error("User ID is required.");
+      }
+
+      const query = `
+        SELECT 
+            attendance.attendance_status
+        FROM 
+            attendance
+        WHERE 
+            attendance.user_id = ?`;
+
+      const [rows] = await db.execute(query, [user_id]);
+
+      if (!rows || rows.length === 0) {
+        return {
+          success: false,
+          message: "No attendance records found for the given user ID.",
+        };
+      }
+
+      const summary = { present: 0, late: 0, excused: 0, absent: 0 };
+      rows.forEach((row) => {
+        const statusLiteral = this.getAttendanceStatusLiteral(
+          row.attendance_status
+        );
+        summary[statusLiteral]++;
+      });
+
+      const totalSessions = rows.length;
+      const percentages = {
+        present: ((summary.present / totalSessions) * 100).toFixed(2) + "%",
+        late: ((summary.late / totalSessions) * 100).toFixed(2) + "%",
+        excused: ((summary.excused / totalSessions) * 100).toFixed(2) + "%",
+        absent: ((summary.absent / totalSessions) * 100).toFixed(2) + "%",
+      };
+
+      return {
+        success: true,
+        summary,
+        percentages,
+      };
+    } catch (error) {
+      console.error("Error getting user attendance summary:", error.message);
+      return {
+        success: false,
+        message: "An error occurred while retrieving the attendance summary.",
+      };
+    }
+  }
+  static async getUserScheduleAttendanceSummary(user_id, schedule_id) {
+    try {
+      if (!user_id || !schedule_id) {
+        throw new Error("User ID and Schedule ID are required.");
+      }
+
+      const query = `
+        SELECT 
+            attendance.attendance_status
+        FROM 
+            attendance
+        INNER JOIN 
+            attendance_sessions 
+        ON 
+            attendance.session_id = attendance_sessions.id
+        WHERE 
+            attendance.user_id = ? 
+            AND attendance_sessions.schedule_id = ?`;
+
+      const [rows] = await db.execute(query, [user_id, schedule_id]);
+
+      if (!rows || rows.length === 0) {
+        return {
+          success: false,
+          message:
+            "No attendance records found for the given user ID and schedule ID.",
+        };
+      }
+
+      const summary = { present: 0, late: 0, excused: 0, absent: 0 };
+      rows.forEach((row) => {
+        const statusLiteral = this.getAttendanceStatusLiteral(
+          row.attendance_status
+        );
+        summary[statusLiteral]++;
+      });
+
+      const totalSessions = rows.length;
+      const percentages = {
+        present: ((summary.present / totalSessions) * 100).toFixed(2) + "%",
+        late: ((summary.late / totalSessions) * 100).toFixed(2) + "%",
+        excused: ((summary.excused / totalSessions) * 100).toFixed(2) + "%",
+        absent: ((summary.absent / totalSessions) * 100).toFixed(2) + "%",
+      };
+
+      return {
+        success: true,
+        summary,
+        percentages,
+      };
+    } catch (error) {
+      console.error(
+        "Error getting user schedule attendance summary:",
+        error.message
+      );
+      return {
+        success: false,
+        message: "An error occurred while retrieving the attendance summary.",
+      };
+    }
+  }
   static getAttendanceStatusLiteral(status) {
     switch (status) {
       case 0:

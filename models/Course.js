@@ -1,7 +1,6 @@
 const db = require("../config/dbConnection");
 
 class Course {
-  // Get all courses and their schedules
   static async getAll() {
     try {
       const courseQuery = `SELECT course_id, name, credits FROM courses`;
@@ -45,7 +44,6 @@ class Course {
             });
           });
         } else {
-          // If no schedules, include the course without schedule details
           courseDetails.push({
             courseId: course.course_id,
             name: course.name,
@@ -73,22 +71,12 @@ class Course {
     }
   }
 
-  // Get courses and schedules by user ID
   static async getByUser(data) {
     const { id } = data;
 
     try {
-      // Step 1: Fetch the user_id using the id from JWT
-      const userQuery = `SELECT user_id FROM users WHERE id = ?`;
-      const [userRows] = await db.execute(userQuery, [id]);
+      const userId = id;
 
-      if (userRows.length === 0) {
-        throw new Error("User not found");
-      }
-
-      const userId = userRows[0].user_id;
-
-      // Step 2: Fetch enrolled courses and their types for the user from the `enrollments` table
       const enrollmentQuery = `SELECT course_id, type FROM enrollments WHERE user_id = ?`;
       const [enrollmentRows] = await db.execute(enrollmentQuery, [userId]);
 
@@ -126,7 +114,6 @@ class Course {
             });
           });
         } else {
-          // If no schedules, include the course without schedule details
           courseDetails.push({
             courseId: course.course_id,
             name: course.name,

@@ -1,5 +1,4 @@
-const User = require("../../models/Users"); // Adjust the path as necessary
-
+const User = require("../../models/Users");
 exports.getByMe = async (req, res) => {
   try {
     const id = req.user.id;

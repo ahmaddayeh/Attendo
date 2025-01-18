@@ -1,4 +1,4 @@
-const AttendanceSession = require("../../models/AttendanceSession"); // Adjust the path as necessary
+const AttendanceSession = require("../../models/AttendanceSession");
 exports.createSession = async (req, res) => {
   try {
     const { schedule_id, date, active } = req.body;

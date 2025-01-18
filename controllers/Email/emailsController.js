@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-const Mail = require("../../models/Mails"); // Adjust the path as necessary
+const Mail = require("../../models/Mails");
 
 exports.sendMail = async (req, res) => {
   const { user_id, name, courseName, content } = req.body;
@@ -20,9 +20,9 @@ exports.sendMail = async (req, res) => {
     console.log("SMTP Server is ready to send emails");
 
     const mailOptions = {
-      from: '"Attendo" <attendo@attendosystems.com>', // Sender address
-      to: "jnet230@gmail.com", // Recipient address
-      subject: "New Absence Request", // Subject line
+      from: '"Attendo" <attendo@attendosystems.com>',
+      to: "jnet230@gmail.com",
+      subject: "New Absence Request",
       html: `
       <table border="0" width="100%" cellspacing="0" cellpadding="0" align="center">
   <tbody>
@@ -414,11 +414,9 @@ exports.sendMail = async (req, res) => {
 `,
     };
 
-    // Send the email
     const info = await transporter.sendMail(mailOptions);
     console.log("Email sent successfully:", info.response);
 
-    // Return success response
     res.status(200).json({
       success: true,
       message: "Email sent successfully",

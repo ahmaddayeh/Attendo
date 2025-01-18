@@ -1,4 +1,4 @@
-const MAC = require("../../models/MAC"); // Adjust the path as necessary
+const MAC = require("../../models/MAC");
 
 exports.getMAC = async (req, res) => {
   try {

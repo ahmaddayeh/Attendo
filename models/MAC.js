@@ -1,7 +1,6 @@
 const db = require("../config/dbConnection");
 
 class MAC {
-  // Get all MAC addresses with room and related details
   static async getAll() {
     try {
       const query = `SELECT id, room, mac_address FROM locations`;
@@ -18,7 +17,6 @@ class MAC {
     }
   }
 
-  // Get MAC details by ID
   static async getRoomId(data) {
     try {
       const { id } = data;
@@ -36,7 +34,6 @@ class MAC {
     }
   }
 
-  // Get MAC details by room name
   static async getByRoomName(data) {
     try {
       const { room } = data;

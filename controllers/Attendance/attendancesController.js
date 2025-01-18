@@ -1,4 +1,4 @@
-const Attendance = require("../../models/Attendance"); // Adjust the path as necessary
+const Attendance = require("../../models/Attendance");
 const nodemailer = require("nodemailer");
 
 exports.modifyAttendace = async (req, res) => {
@@ -20,7 +20,7 @@ exports.modifyAttendace = async (req, res) => {
         status = 3;
         break;
       default:
-        status = -1; // unknown status
+        status = -1;
     }
 
     if (status === -1) {
@@ -136,6 +136,55 @@ exports.generateAttendanceSheet = async (req, res) => {
     } else {
       console.log(attendance);
       res.status(404).json({ error: "Session not found" });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+exports.getUserAttendanceSummary = async (req, res) => {
+  console.log("getUserAttendanceSummary");
+  try {
+    const { user_id } = req.params;
+
+    const attendanceSummary = await Attendance.getUserAttendanceSummary(
+      user_id
+    );
+
+    if (attendanceSummary.success) {
+      res.status(200).json({
+        success: true,
+        summary: attendanceSummary.summary,
+        percentages: attendanceSummary.percentages,
+      });
+    } else {
+      res.status(404).json({ error: attendanceSummary.message });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getUserCourseAttendanceSummary = async (req, res) => {
+  console.log("getUserCourseAttendanceSummary");
+
+  try {
+    const { user_id, schedule_id } = req.params;
+
+    const attendanceSummary = await Attendance.getUserScheduleAttendanceSummary(
+      user_id,
+      schedule_id
+    );
+
+    if (attendanceSummary.success) {
+      res.status(200).json({
+        success: true,
+        summary: attendanceSummary.summary,
+        percentages: attendanceSummary.percentages,
+      });
+    } else {
+      res.status(404).json({ error: attendanceSummary.message });
     }
   } catch (error) {
     console.error(error);

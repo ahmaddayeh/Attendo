@@ -20,7 +20,6 @@ app.use(express.urlencoded({ extended: true }));
 // Enable CORS
 app.use(cors());
 
-// Define routes
 app.use("/auth", authRoutes);
 
 app.use("/users", usersRoutes);

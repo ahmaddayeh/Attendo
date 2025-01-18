@@ -6,7 +6,6 @@ require("dotenv").config();
 const secret = process.env.JWT_SECRET;
 const expiresIn = process.env.JWT_EXPIRES_IN;
 
-// Register a new user
 exports.register = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -38,7 +37,6 @@ exports.register = async (req, res) => {
   }
 };
 
-// Login a user
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -73,7 +71,6 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// Update user profile
 exports.updateProfile = async (req, res) => {
   try {
     const id = req.params.id;
@@ -90,7 +87,6 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-// Delete user account
 exports.deleteAccount = async (req, res) => {
   try {
     const id = req.params.id;

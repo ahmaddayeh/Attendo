@@ -2,7 +2,7 @@ const db = require("../config/dbConnection");
 
 class Course {
   static async getTeacherEmail(data) {
-    const { courseName } = data; // Destructure input
+    const { courseName } = data;
 
     try {
       const courseQuery = "SELECT course_id FROM courses WHERE name = ?";
@@ -24,7 +24,6 @@ class Course {
 
       const userId = enrolmentResult[0].user_id;
 
-      // Step 3: Get the email of the user from the users table
       const userQuery = "SELECT email FROM users WHERE user_id = ?";
       const [userResult] = await db.execute(userQuery, [userId]);
 

@@ -1,4 +1,4 @@
-const Course = require("../../models/Course"); // Adjust the path as necessary
+const Course = require("../../models/Course");
 
 exports.getCourses = async (req, res) => {
   try {
