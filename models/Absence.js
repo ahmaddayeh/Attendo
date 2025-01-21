@@ -4,7 +4,6 @@ class Absence {
   static async findByUserId(data) {
     const { id } = data;
     try {
-      // Step 1: Get course_ids for the instructor from the enrollments table
       const enrolmentQuery = `
         SELECT 
           e.course_id
@@ -22,7 +21,6 @@ class Absence {
         };
       }
 
-      // Step 2: Get schedule details for the course_ids from the schedules table
       const courseIds = enrolments.map((enrolment) => enrolment.course_id);
       const courseIdsPlaceholders = courseIds.map(() => "?").join(",");
       const scheduleQuery = `
@@ -41,7 +39,7 @@ class Absence {
         WHERE 
           s.course_id IN (${courseIdsPlaceholders})
         ORDER BY 
-          s.id`; // Sorting by schedule_id
+          s.id`;
       const [schedules] = await db.execute(scheduleQuery, courseIds);
 
       if (!schedules.length) {
@@ -52,16 +50,15 @@ class Absence {
         };
       }
 
-      // Step 3: Get absence requests for the schedule_ids
       const scheduleIds = schedules.map((schedule) => schedule.schedule_id);
       const scheduleIdsPlaceholders = scheduleIds.map(() => "?").join(",");
       const absenceQuery = `
         SELECT 
-          ar.id, 
+          ar.id AS absence_id, 
           ar.user_id, 
           ar.schedule_id, 
           ar.is_approved, 
-          CONCAT_WS(' ', u.first_name, u.last_name) AS full_name
+          CONCAT_WS(' ', u.first_name, u.last_name) AS user_full_name
         FROM 
           absence_requests ar
         LEFT JOIN 
@@ -70,35 +67,37 @@ class Absence {
           ar.schedule_id IN (${scheduleIdsPlaceholders})`;
       const [absences] = await db.execute(absenceQuery, scheduleIds);
 
-      const absenceData = absences.map((absence) => ({
-        id: absence.id,
-        userId: absence.user_id,
-        scheduleId: absence.schedule_id,
-        approvalStatus: absence.is_approved,
-        userFullName: absence.full_name || "Unknown User",
-      }));
-
-      // Combine schedules with absence data
-      const responseData = schedules.map((schedule) => {
-        const scheduleAbsences = absenceData.filter(
-          (abs) => abs.scheduleId === schedule.schedule_id
-        );
-        return {
-          scheduleId: schedule.schedule_id,
-          courseId: schedule.course_id,
-          courseName: schedule.course_name,
-          locationId: schedule.location_id,
-          days: schedule.days,
-          startTime: schedule.start_time,
-          endTime: schedule.end_time,
-          absences: scheduleAbsences,
-        };
-      });
+      // Filter schedules to only include those with associated absences
+      const responseData = schedules
+        .filter((schedule) =>
+          absences.some(
+            (absence) => absence.schedule_id === schedule.schedule_id
+          )
+        )
+        .map((schedule) => {
+          const relatedAbsences = absences.filter(
+            (absence) => absence.schedule_id === schedule.schedule_id
+          );
+          return relatedAbsences.map((absence) => ({
+            scheduleId: schedule.schedule_id,
+            courseId: schedule.course_id,
+            courseName: schedule.course_name,
+            locationId: schedule.location_id,
+            days: schedule.days,
+            startTime: schedule.start_time,
+            endTime: schedule.end_time,
+            absenceId: absence.absence_id,
+            userId: absence.user_id,
+            approvalStatus: absence.is_approved,
+            userFullName: absence.user_full_name || "Unknown User",
+          }));
+        })
+        .flat();
 
       return {
         success: true,
         data: {
-          totalAbsencesRequests: absenceData.length,
+          totalAbsencesRequests: absences.length,
           schedules: responseData,
         },
       };
