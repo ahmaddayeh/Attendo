@@ -30,7 +30,14 @@ class Course {
           enrollmentRows.length > 0 ? enrollmentRows[0].type : null;
 
         if (scheduleRows.length > 0) {
-          scheduleRows.forEach((schedule) => {
+          for (const schedule of scheduleRows) {
+            const attendanceQuery = `SELECT id FROM attendance_sessions WHERE schedule_id = ? AND active = 1`;
+            const [attendanceRows] = await db.execute(attendanceQuery, [
+              schedule.id,
+            ]);
+
+            const hasActiveSession = attendanceRows.length > 0 ? 1 : 0;
+
             courseDetails.push({
               courseId: course.course_id,
               name: course.name,
@@ -41,8 +48,9 @@ class Course {
               days: schedule.days,
               startTime: schedule.start_time,
               endTime: schedule.end_time,
+              hasActiveSession,
             });
-          });
+          }
         } else {
           courseDetails.push({
             courseId: course.course_id,
@@ -54,6 +62,7 @@ class Course {
             days: null,
             startTime: null,
             endTime: null,
+            hasActiveSession: 0,
           });
         }
       }
@@ -100,7 +109,14 @@ class Course {
         ]);
 
         if (scheduleRows.length > 0) {
-          scheduleRows.forEach((schedule) => {
+          for (const schedule of scheduleRows) {
+            const attendanceQuery = `SELECT id FROM attendance_sessions WHERE schedule_id = ? AND active = 1`;
+            const [attendanceRows] = await db.execute(attendanceQuery, [
+              schedule.id,
+            ]);
+
+            const hasActiveSession = attendanceRows.length > 0 ? 1 : 0;
+
             courseDetails.push({
               courseId: course.course_id,
               name: course.name,
@@ -111,8 +127,9 @@ class Course {
               days: schedule.days,
               startTime: schedule.start_time,
               endTime: schedule.end_time,
+              hasActiveSession,
             });
-          });
+          }
         } else {
           courseDetails.push({
             courseId: course.course_id,
@@ -124,6 +141,7 @@ class Course {
             days: null,
             startTime: null,
             endTime: null,
+            hasActiveSession: 0,
           });
         }
       }

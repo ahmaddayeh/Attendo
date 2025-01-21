@@ -6,6 +6,7 @@ const attendancesessionsRoutes = require("./routes/attendancesessionsRoutes");
 const attendancesRoutes = require("./routes/attendancesRoutes");
 const macAddressesRoutes = require("./routes/macAddressesRoutes");
 const emailsRoutes = require("./routes/emailsRoutes");
+const absenceRoutes = require("./routes/absenceRoutes");
 
 const cors = require("cors");
 
@@ -33,5 +34,7 @@ app.use("/attendance", attendancesRoutes);
 app.use("/mac", macAddressesRoutes);
 
 app.use("/mail", emailsRoutes);
+
+app.use("/absence", absenceRoutes);
 
 module.exports = app;

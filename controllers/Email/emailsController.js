@@ -4,7 +4,6 @@ const Mail = require("../../models/Mails");
 exports.sendMail = async (req, res) => {
   const { user_id, name, courseName, content } = req.body;
   const recipient = await Mail.getTeacherEmail({ courseName: courseName });
-  console.log(recipient);
   try {
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
@@ -23,7 +22,7 @@ exports.sendMail = async (req, res) => {
       from: '"Attendo" <attendo@attendosystems.com>',
       to: "jnet230@gmail.com",
       subject: "New Absence Request",
-      html: `
+      html: `....
       <table border="0" width="100%" cellspacing="0" cellpadding="0" align="center">
   <tbody>
     <tr>
