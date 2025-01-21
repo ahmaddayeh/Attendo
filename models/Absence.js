@@ -64,7 +64,8 @@ class Absence {
         LEFT JOIN 
           users u ON ar.user_id = u.user_id
         WHERE 
-          ar.schedule_id IN (${scheduleIdsPlaceholders})`;
+          ar.schedule_id IN (${scheduleIdsPlaceholders})
+          AND ar.is_approved = 0`;
       const [absences] = await db.execute(absenceQuery, scheduleIds);
 
       // Filter schedules to only include those with associated absences

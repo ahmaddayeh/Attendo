@@ -23,15 +23,39 @@ class AttendanceSession {
       const enrollmentsQuery =
         "SELECT id, user_id, type, course_id FROM enrollments WHERE course_id = ?";
       const [enrollments] = await db.execute(enrollmentsQuery, [course_id]);
-      console.log(enrollments);
 
-      const attendanceRecords = enrollments.map((enrollment) => [
-        enrollment.user_id,
-        sessionId,
-        0,
-        new Date(),
-        new Date(),
+      const absenceRequestsQuery =
+        "SELECT id, user_id, is_approved FROM absence_requests WHERE schedule_id = ?";
+      const [absenceRequests] = await db.execute(absenceRequestsQuery, [
+        schedule_id,
       ]);
+
+      const attendanceRecords = enrollments.map((enrollment) => {
+        const absenceRequest = absenceRequests.find(
+          (request) => request.user_id === enrollment.user_id
+        );
+
+        if (absenceRequest && absenceRequest.is_approved === 2) {
+          return [enrollment.user_id, sessionId, 1, new Date(), new Date()];
+        } else {
+          return [enrollment.user_id, sessionId, 0, new Date(), new Date()];
+        }
+      });
+
+      const absenceRequestIdsToDelete = absenceRequests
+        .filter((request) => request.is_approved === 2)
+        .map((request) => request.id);
+
+      console.log("IDs to delete:", absenceRequestIdsToDelete);
+
+      if (absenceRequestIdsToDelete.length > 0) {
+        const placeholders = absenceRequestIdsToDelete
+          .map(() => "?")
+          .join(", ");
+        const deleteAbsenceRequestsQuery = `DELETE FROM absence_requests WHERE id IN (${placeholders})`;
+
+        await db.execute(deleteAbsenceRequestsQuery, absenceRequestIdsToDelete);
+      }
 
       if (attendanceRecords.length > 0) {
         const attendanceInsertQuery =

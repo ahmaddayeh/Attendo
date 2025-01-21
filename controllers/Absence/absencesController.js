@@ -8,7 +8,7 @@ exports.getAbsenceRequestsByUserId = async (req, res) => {
 
     if (absence.success) {
       res.status(200).json({
-        absence_list: absence.data,
+        schedules: absence.data.schedules,
         success: true,
         message: "Absence requests retrieved successfully",
       });
