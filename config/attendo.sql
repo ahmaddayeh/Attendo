@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost:3306
--- Generation Time: Jan 18, 2025 at 01:08 PM
+-- Host: 127.0.0.1
+-- Generation Time: Jan 22, 2025 at 12:11 AM
 -- Server version: 10.11.10-MariaDB
--- PHP Version: 8.3.14
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -20,6 +20,19 @@ SET time_zone = "+00:00";
 --
 -- Database: `attendo`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `absence_requests`
+--
+
+CREATE TABLE `absence_requests` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `schedule_id` int(11) NOT NULL,
+  `is_approved` int(11) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -124,6 +137,14 @@ CREATE TABLE `users` (
 --
 
 --
+-- Indexes for table `absence_requests`
+--
+ALTER TABLE `absence_requests`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `schedule_id` (`schedule_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
 -- Indexes for table `attendance`
 --
 ALTER TABLE `attendance`
@@ -151,6 +172,7 @@ ALTER TABLE `courses`
 --
 ALTER TABLE `enrollments`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_id_2` (`user_id`,`course_id`),
   ADD KEY `user_id` (`user_id`),
   ADD KEY `fk_course_id_iknd` (`course_id`);
 
@@ -178,6 +200,12 @@ ALTER TABLE `users`
 --
 -- AUTO_INCREMENT for dumped tables
 --
+
+--
+-- AUTO_INCREMENT for table `absence_requests`
+--
+ALTER TABLE `absence_requests`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `attendance`
@@ -224,6 +252,13 @@ ALTER TABLE `users`
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `absence_requests`
+--
+ALTER TABLE `absence_requests`
+  ADD CONSTRAINT `absence_requests_ibfk_1` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `absence_requests_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `attendance`

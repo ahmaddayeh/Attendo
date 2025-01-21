@@ -113,8 +113,26 @@ class Absence {
   }
 
   static async create(data) {
-    const { user_id, schedule_id, is_approved } = data;
+    const { user_id, course_name, is_approved } = data;
     try {
+      // Fetch the schedule_id based on the course_name
+      const scheduleQuery = `
+        SELECT 
+          s.id AS schedule_id
+        FROM 
+          schedules s
+        JOIN 
+          courses c ON s.course_id = c.course_id
+        WHERE 
+          c.name = ?`;
+      const [schedules] = await db.execute(scheduleQuery, [course_name]);
+
+      if (!schedules.length) {
+        throw new Error("No schedule found for the given course name");
+      }
+
+      const schedule_id = schedules[0].schedule_id;
+
       const query = `
         INSERT INTO absence_requests (user_id, schedule_id, is_approved)
         VALUES (?, ?, ?)`;
